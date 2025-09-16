@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Playground - Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 90%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+        }
+        
+        .status-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-healthy {
+            background-color: #28a745;
+        }
+        
+        .status-unhealthy {
+            background-color: #dc3545;
+        }
+        
+        .status-unknown {
+            background-color: #ffc107;
+        }
+        
+        .api-section {
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .user-form {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .users-list {
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .user-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DevOps Playground</h1>
+        
+        <div class="status-card">
+            <h3>System Status</h3>
+            <div id="system-status">
+                <span class="status-indicator status-unknown"></span>
+                <span>Checking system status...</span>
+            </div>
+        </div>
+        
+        <div class="api-section">
+            <h3>API Demo</h3>
+            <button class="btn" onclick="checkHealth()">Check API Health</button>
+            <button class="btn" onclick="loadUsers()">Load Users</button>
+            
+            <div class="user-form">
+                <h4>Add New User</h4>
+                <div class="form-group">
+                    <label for="userName">Name:</label>
+                    <input type="text" id="userName" placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email:</label>
+                    <input type="email" id="userEmail" placeholder="Enter email">
+                </div>
+                <button class="btn" onclick="addUser()">Add User</button>
+            </div>
+            
+            <div id="users-list" class="users-list"></div>
+        </div>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin.replace('frontend', 'api');
+        
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}">${message}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+        
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('system-status');
+                const indicator = statusDiv.querySelector('.status-indicator');
+                const text = statusDiv.querySelector('span:last-child');
+                
+                if (data.status === 'healthy') {
+                    indicator.className = 'status-indicator status-healthy';
+                    text.textContent = `System is healthy - Database: ${data.services.database}, Redis: ${data.services.redis}`;
+                } else {
+                    indicator.className = 'status-indicator status-unhealthy';
+                    text.textContent = `System is degraded - Database: ${data.services.database}, Redis: ${data.services.redis}`;
+                }
+            } catch (error) {
+                const statusDiv = document.getElementById('system-status');
+                const indicator = statusDiv.querySelector('.status-indicator');
+                const text = statusDiv.querySelector('span:last-child');
+                
+                indicator.className = 'status-indicator status-unhealthy';
+                text.textContent = 'Failed to connect to API';
+                showMessage('Failed to connect to API: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users`);
+                const users = await response.json();
+                
+                const usersList = document.getElementById('users-list');
+                if (users.length === 0) {
+                    usersList.innerHTML = '<p>No users found.</p>';
+                    return;
+                }
+                
+                usersList.innerHTML = users.map(user => `
+                    <div class="user-item">
+                        <strong>${user.name}</strong> (${user.email})
+                        <br>
+                        <small>Created: ${new Date(user.created_at).toLocaleString()}</small>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showMessage('Failed to load users: ' + error.message, 'error');
+            }
+        }
+        
+        async function addUser() {
+            const name = document.getElementById('userName').value.trim();
+            const email = document.getElementById('userEmail').value.trim();
+            
+            if (!name || !email) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email })
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    showMessage(`User ${user.name} created successfully!`);
+                    document.getElementById('userName').value = '';
+                    document.getElementById('userEmail').value = '';
+                    loadUsers(); // Refresh the users list
+                } else {
+                    const error = await response.json();
+                    showMessage('Failed to create user: ' + error.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to create user: ' + error.message, 'error');
+            }
+        }
+        
+        // Check health on page load
+        window.addEventListener('load', checkHealth);
+    </script>
+</body>
+</html>

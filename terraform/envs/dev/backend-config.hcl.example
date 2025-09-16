@@ -1,0 +1,8 @@
+# Example backend configuration for Terraform
+# Use this with: terraform init -backend-config=backend-config.hcl
+
+bucket = "your-terraform-state-bucket-name"
+key    = "eks-playground/terraform.tfstate"
+region = "us-east-1"
+dynamodb_table = "terraform-state-lock"
+encrypt = true
